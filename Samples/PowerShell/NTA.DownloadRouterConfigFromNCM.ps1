@@ -18,13 +18,11 @@ $nodeName = "my.netflownode.corp"       # Update to match your configuration
 $interfaceName = "GigabitEthernet0/1"   # Update to match your configuration
 
 $query= "
-SELECT S.NetflowSourceID, S.NodeID, S.InterfaceID, S.Enabled, S.LastTimeFlow, S.LastTime, S.EngineID, 
-    N.NodeName,
-    I.Name as InterfaceName, I.Index as RouterIndex
-FROM Orion.Netflow.Source S
-INNER JOIN Orion.NPM.Interfaces I ON I.InterfaceID = S.InterfaceID
-INNER JOIN Orion.Nodes N ON S.NodeID = N.NodeID
-WHERE N.NodeName = '$nodeName' AND I.InterfaceName = '$interfaceName'
+SELECT s.NetflowSourceID, s.NodeID, s.InterfaceID, s.Enabled, s.LastTimeFlow, s.LastTime, s.EngineID, 
+    s.Node.NodeName,
+    s.Interface.Name as InterfaceName, s.Interface.Index as RouterIndex
+FROM Orion.Netflow.Source s
+WHERE s.Node.NodeName = '$nodeName' AND s.Interface.InterfaceName = '$interfaceName'
 "
 $netflowSourceInfo = Get-SwisData $swis $query
 if(!$netflowSourceInfo) 
@@ -37,10 +35,9 @@ if(!$netflowSourceInfo)
 # You can use it to check node configuration - for example verify Netflow configuration
 $orionNodeId = $netflowSourceInfo.NodeID
 $query = "
-SELECT TOP 1 C.NodeID AS NcmNodeId, N.CoreNodeId, C.DownloadTime, C.ConfigType, C.Config
+SELECT TOP 1 C.NodeID AS NcmNodeId, C.NodeProperties.CoreNodeId, C.DownloadTime, C.ConfigType, C.Config
 FROM NCM.ConfigArchive C
-INNER JOIN NCM.NodeProperties N ON C.NodeId = N.NodeId
-WHERE N.CoreNodeID = $orionNodeId
+WHERE C.NodeProperties.CoreNodeID = $orionNodeId
 ORDER BY C.DownloadTime DESC
 "
 
